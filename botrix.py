@@ -1,21 +1,48 @@
 import aiohttp
+import asyncio
+from typing import Optional, Union
+from .exceptions import InvalidIDException
 
 class Bot:
     def __init__(self, data):
-        bot = data.get('bot')
-        for attr, value in bot.items():
+        for attr, value in data.items():
             setattr(self, attr, value)
 
 class BotrixClient:
-    def __init__(self, *, loop):
-        self.session = aiohttp.ClientSession(loop=loop)
-    
-    async def get_bot(self, _id):
-        resp = await self.session.get(f'https://botrix.cc/api/v1/bot/{_id}')
-        data = await resp.json()
-        return Bot(data)
+    def __init__(self, *, loop=None):
+        self.loop = loop if loop is not None else asyncio.get_running_loop()
+        self.session = aiohttp.ClientSession(loop=self.loop)
 
-    async def check_vote(self, bot_id, user_id):
-        resp = await self.session.get(f'https://botrix.cc/api/v1/voted/{bot_id}/{user_id}')
-        data = await resp.json()
+    async def __aenter__(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession(loop=self.loop)
+        return self
+
+    async def __aexit__(self, *err):
+        if not self.session.closed:
+            await asyncio.sleep(0)
+            await self.session.close()
+        self.session = None
+    
+    async def get_bot(self, _id) -> Optional[Bot]:
+        ''' Returns information of the specified bot '''
+        async with self.session.get(f'https://botrix.cc/api/v1/bot/{_id}') as resp:
+            data = await resp.json()
+        bot = data.get('bot')
+        if bot == 'bot id not found':
+            return None
+        return Bot(bot)
+
+    async def check_vote(self, bot_id, user_id) -> bool:
+        ''' Checks if `user_id` has voted for `bot_id` and returns a corresponding boolean value '''
+        async with self.session.get(f'https://botrix.cc/api/v1/voted/{bot_id}/{user_id}') as resp:
+            data = await resp.json()
+        if 'ERROR' in data:
+            raise InvalidIDException(data.get('ERROR'))
         return data.get('voted')
+
+    async def close(self):
+        if self.session:
+            await asyncio.sleep(0)
+            await self.session.close()
+
