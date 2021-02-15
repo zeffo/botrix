@@ -3,6 +3,11 @@
 An API Wrapper that supports asynchronous requests for the [Botrix API](https://docs.botrix.cc/)
 
 
+# Installation
+> Using PyPI
+`pip install botrix`
+
+
 # Usage
 
 > Using BotrixClient as a context manager
