@@ -3,3 +3,6 @@ class BotrixException(Exception):
         self.error = error
     def __repr__(self):
         return self.error
+
+class RatelimitException(BotrixException):
+    pass
