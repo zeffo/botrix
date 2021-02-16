@@ -41,11 +41,6 @@ class Bot:
             if key in self._data:
                 setattr(self, key, self._data[key])
 
-    def __bool__(self):
-        if self._data == 'bot id not found':
-            return None
-        return True 
-
 
 class BotrixClient:
     ''' Client interface which interacts with the Botrix API. It is recommended you use this as an Async Context Manager. '''
@@ -86,7 +81,9 @@ class BotrixClient:
         async with self.session.get(f'{self.BASE_URL}/bot/{bot_id}') as resp:
             await self._handle_response(resp)
             data = await resp.json()
-        return Bot(data)
+        if data.get('bot') == 'bot id not found':
+            return None
+        return Bot(data) 
 
     async def check_vote(self, bot_id, user_id) -> bool:
         ''' Checks if User with `user_id` has voted for Bot with `bot_id` '''
