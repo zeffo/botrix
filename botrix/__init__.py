@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-from typing import Optional, Union
+from typing import Optional
 from .exceptions import BotrixException
 
 class Bot:
@@ -12,6 +12,8 @@ class BotrixClient:
     def __init__(self, *, loop=None):
         self.loop = loop if loop is not None else asyncio.get_running_loop()
         self.session = aiohttp.ClientSession(loop=self.loop)
+        self.post_count = 0
+        self.post_last = 0
 
     async def __aenter__(self):
         if not self.session:
@@ -41,8 +43,15 @@ class BotrixClient:
             raise BotrixException(data.get('ERROR'))
         return data.get('voted')
 
-    async def close(self):
+    async def post_bot_data(self, _id, **kwargs):
+        async with self.session.post('') as resp:
+            pass
+
+    async def close(self) -> None:
+        ''' Closes the session. It is recommended you use the async context manager instead. '''
         if self.session:
             await asyncio.sleep(0)
             await self.session.close()
+
+    
 
