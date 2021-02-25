@@ -36,14 +36,19 @@ class Bot:
     ]
 
     def __init__(self, data):
-        self._data = data.get('bot')
+        self._data = data
         for key in self.__slots__:
             if key in self._data:
                 setattr(self, key, self._data[key])
 
 
 class BotrixClient:
-    ''' Client interface which interacts with the Botrix API. It is recommended you use this as an Async Context Manager. '''
+    '''Client interface which interacts with the Botrix API. It is recommended you use this as an async context manager. 
+
+    :param loop: A running event loop, defaults to the currently running event loop.
+    :type loop: 
+    :param debug: A boolean that enables/disables debug mode. This is entriely for testing purposes.
+    '''
     def __init__(self, *, loop=None, debug=False) -> None:
         self.loop = loop or asyncio.get_event_loop()
         self.debug = debug
@@ -100,6 +105,8 @@ class BotrixClient:
         async with self.session.post(f'{self.BASE_URL}/bot/{bot_id}', data=kwargs) as resp:
             await self._handle_response(resp)
             data = await resp.json()
+            if data.get('error'):
+                raise(BotrixException(data['message']))
         return data
         
 
